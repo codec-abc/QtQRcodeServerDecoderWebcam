@@ -22,6 +22,7 @@ FORMS    += mainwindow.ui
 unix|win32: LIBS += -L$$PWD/../lib/zbarWin32sharedMinGW/ -llibzbar-0
 
 INCLUDEPATH += $$PWD/../zbarSource/include/zbar
+INCLUDEPATH += $$PWD/../zbarSource/include
 DEPENDPATH += $$PWD/../zbarSource/include/zbar
 
 
@@ -31,4 +32,4 @@ INCLUDEPATH += $$PWD/../zxingSource
 DEPENDPATH += $$PWD/../zxingSource
 
 DEPENDPATH += -L$$PWD/../lib
-LIBS+= += -L$$PWD/../lib
+LIBS+= -L$$PWD/../lib

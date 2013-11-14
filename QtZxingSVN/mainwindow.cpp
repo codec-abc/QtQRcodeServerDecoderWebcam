@@ -161,10 +161,17 @@ void MainWindow::on_pushButton_2_clicked()
 
         QActionGroup *videoDevicesGroup = new QActionGroup(this);
         videoDevicesGroup->setExclusive(true);
+        int i = 0;
         foreach(const QByteArray &deviceName, QCamera::availableDevices())
         {
-            cameraDevice = deviceName;
+            QString number = QString::number(i);
+            std::cout << "going through webcam : " << number.toStdString() << std::endl;
+            if(i == 0)
+            {
+                cameraDevice = deviceName;
+            }
             QString someString(cameraDevice);
+            i++;
             //this->ui->textEdit->append(someString);
         }
         m_camera = new QCamera(cameraDevice);
