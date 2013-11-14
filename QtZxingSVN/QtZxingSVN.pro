@@ -18,18 +18,17 @@ HEADERS  += mainwindow.h \
 
 FORMS    += mainwindow.ui
 
-unix|win32: LIBS += -L$$PWD/../../NetBeansProjects/zxingLibSVN/dist/Debug/MinGW-Windows/ -llibZxingSVN
+
+unix|win32: LIBS += -L$$PWD/../lib/zbarWin32sharedMinGW/ -llibzbar-0
+
+INCLUDEPATH += $$PWD/../zbarSource/include/zbar
+DEPENDPATH += $$PWD/../zbarSource/include/zbar
 
 
+unix|win32: LIBS += -L$$PWD/../lib/zxingWin32sharedMinGW/ -llibZxingSVN
 
-INCLUDEPATH += $$PWD/../../NetBeansProjects/zxingLibSVN/dist/Debug/MinGW-Windows
-INCLUDEPATH += $$PWD/../../../../../Users/VIOT/Desktop
-INCLUDEPATH += C:\Users\VIOT\Documents\projects\zbar-0.10\include\zbar
-INCLUDEPATH += C:\Users\VIOT\Documents\projects\zbar-0.10\include
-DEPENDPATH += $$PWD/../../NetBeansProjects/zxingLibSVN/dist/Debug/MinGW-Windows
+INCLUDEPATH += $$PWD/../zxingSource
+DEPENDPATH += $$PWD/../zxingSource
 
-
-unix|win32: LIBS += -L$$PWD/../../../Desktop/lib/ -llibzbar-0
-
-INCLUDEPATH += $$PWD/../../../Desktop
-DEPENDPATH += $$PWD/../../../Desktop
+DEPENDPATH += -L$$PWD/../lib
+LIBS+= += -L$$PWD/../lib
