@@ -4,17 +4,21 @@
 #
 #-------------------------------------------------
 
-QT       += core gui widgets multimedia multimediawidgets
+QT       += core gui widgets multimedia multimediawidgets network
 
 TARGET = QtZxingSVN
 TEMPLATE = app
 
 SOURCES += main.cpp\
         mainwindow.cpp \
-    qimagetoluminancesource.cpp
+    qimagetoluminancesource.cpp \
+    httpdeamon.cpp \
+    threadtest.cpp
 
 HEADERS  += mainwindow.h \
-    qimagetoluminancesource.h
+    qimagetoluminancesource.h \
+    httpdeamon.h \
+    threadtest.h
 
 FORMS    += mainwindow.ui
 

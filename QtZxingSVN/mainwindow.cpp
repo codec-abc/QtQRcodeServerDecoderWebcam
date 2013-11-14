@@ -15,13 +15,19 @@
 #include <QZBarImage.h>
 #include <QZBar.h>
 #include <ImageScanner.h>
+#include <threadtest.h>
+
+#define MAXTRYFORDECODING 20
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    useDecode1 = false;
+    useDecode1 = true;
+    _httpDaemon = new HttpDaemon(9090);
+    _httpDaemon->setMainWindow(this);
+
 }
 
 MainWindow::~MainWindow()
@@ -32,23 +38,24 @@ MainWindow::~MainWindow()
 void MainWindow::on_pushButton_clicked()
 {
     QString fileName = QFileDialog::getOpenFileName(this,tr("Open File"), "./", tr("All Files (*.*)"));
+    QImage image = QImage(fileName);
     if(useDecode1)
     {
-        decodeFile(fileName);
+        decodeFile(image);
     }
     else
     {
-        decodeFile2(fileName);
+        decodeFile2(image);
     }
 
 
 }
 
 
-void MainWindow::decodeFile(QString fileName)
+QString MainWindow::decodeFile(QImage image)
 {
-    QImage qimage(fileName);
-    QPixmap pixmap(fileName);
+    QImage qimage = image;
+    QPixmap pixmap = QPixmap::fromImage(image);
     this->ui->label->setPixmap(pixmap);
     unsigned int width = qimage.width();
     unsigned int height = qimage.height();
@@ -71,13 +78,16 @@ void MainWindow::decodeFile(QString fileName)
     QList<QString> result;
     for(zbar::Image::SymbolIterator symbol = image2.symbol_begin();symbol != image2.symbol_end();++symbol)
     {
-        result.append(QString::fromStdString(symbol->get_data()));
+        QString string = QString::fromStdString(symbol->get_data());
+       // std::cout << string.toStdString() << std::endl;
+        result.append(string);
         // do something useful with results
         //std::cout << "decoded " << symbol->get_type_name() << " symbol \"" << symbol->get_data() << '"' << std::endl;
     }
     delete[] raw;
     if(result.isEmpty())
     {
+        return QString("");
         //QMessageBox::information(this,"No QRCode decoded","No QRCode can be decode from the picture");
     }
     else
@@ -85,17 +95,22 @@ void MainWindow::decodeFile(QString fileName)
         QString appendedResult="";
         for (int i = 0; i < result.length(); i++)
         {
-            appendedResult.append(result.at(i));
+            QString resultI = result.at(i);
+        //    std::cout << "ITERATE" << std::endl;
+        //    std::cout << "result I = " << resultI.toStdString() << std::endl;
+            appendedResult.append(resultI);
         }
-        QMessageBox::information(this,"QRCode decoded",appendedResult);
+        //std::cout << "RESULT" << appendedResult.toStdString() << std::endl;
+        return appendedResult;
+        //QMessageBox::information(this,"QRCode decoded",appendedResult);
     }
 }
 
 
-void MainWindow::decodeFile2(QString fileName)
+QString MainWindow::decodeFile2(QImage image)
 {
-    QImage qimage(fileName);
-    QPixmap pixmap(fileName);
+    QImage qimage = image;
+    QPixmap pixmap = QPixmap::fromImage(image);
     this->ui->label->setPixmap(pixmap);
     int width = qimage.width();
     int height = qimage.height();
@@ -117,21 +132,24 @@ void MainWindow::decodeFile2(QString fileName)
         zxing::Ref<zxing::String> string = result->getText();
         std::string stringResult = string->getText();
         std::cout << "result is " << stringResult << std::endl;
-        QMessageBox::information(this,"QRCode decoded",QString(stringResult.c_str()));
+        return QString::fromStdString(stringResult);
+        //QMessageBox::information(this,"QRCode decoded",QString(stringResult.c_str()));
     }
     catch (zxing::ChecksumException e)
     {
-        QMessageBox::critical(this,"ChecksumException",QString(e.what()));
+        //QMessageBox::critical(this,"ChecksumException",QString(e.what()));
         std::string message(e.what());
         std::cout << "something wrong happened with checksum" << std::endl;
         std::cout << message << std::endl;
+        return QString("");
     }
     catch (zxing::ReaderException e)
     {
-        QMessageBox::critical(this,"ReaderExecption",QString(e.what()));
+        //QMessageBox::critical(this,"ReaderExecption",QString(e.what()));
         std::string message(e.what());
         std::cout << "something wrong happened with the reader" << std::endl;
         std::cout << message << std::endl;
+        return QString("");
     }
 #ifdef alwayscatch
     catch (zxing::Exception e)
@@ -139,6 +157,7 @@ void MainWindow::decodeFile2(QString fileName)
         std::string message(e.what());
         std::cout << "something wrong happened" << std::endl;
         std::cout << message << std::endl;
+        return QString("");
     }
 #endif
 #else
@@ -147,7 +166,8 @@ void MainWindow::decodeFile2(QString fileName)
         zxing::Ref<zxing::String> string = result->getText();
         std::string stringResult = string->getText();
         std::cout << "result is " << stringResult << std::endl;
-        QMessageBox::information(this,"QRCode decoded",QString(stringResult.c_str()));
+        //QMessageBox::information(this,"QRCode decoded",QString(stringResult.c_str()));
+        return QString(stringResult);
 #endif
 
 }
@@ -188,31 +208,85 @@ void MainWindow::on_pushButton_2_clicked()
         //encoder_setting.setResolution(800,600);
         //m_imageCapture->setEncodingSettings(encoder_setting);
 
-        connect(m_imageCapture, SIGNAL(imageSaved(int,QString)), this, SLOT(processSavedImage(int,QString)));
-
+        //connect(m_imageCapture, SIGNAL(imageSaved(int,QString)), this, SLOT(processSavedImage(int,QString)));
+        connect(m_imageCapture, SIGNAL(imageCaptured(int,QImage)), this,SLOT(processCapturedImage(int,QImage)));
         m_camera->start();
         init = true;
     }
-    m_imageCapture->capture();
+    //m_imageCapture->capture();
+    ThreadTest* test = new ThreadTest();
+    test->mainWindow = this;
+    test->start();
+
 }
 
 void MainWindow::processSavedImage(int a,QString string)
 {
+
+}
+
+void MainWindow::processCapturedImage(int a, QImage image2)
+{
+    QImage image = image2.scaled(400, 400,Qt::KeepAspectRatio);
+    static int nb = 0;
+   // std::cout << "entering process image capture : " << QString::number(nb).toStdString() << std::endl;
+   // std::cout << "processing captured image" << std::endl;
     if(!(listOfCallBack.contains(a)))
     {
         listOfCallBack.insert(a);
-        std::cout << "get call back : " << QString::number(a).toStdString() <<  std::endl;
-        QString fileName = "img.jpg";
+        QString result;
         if(useDecode1)
         {
-            decodeFile(fileName);
+            result = decodeFile(image);
         }
         else
         {
-            decodeFile2(fileName);
+            result = decodeFile2(image);
+        }
+        if (!(result.isEmpty()))
+        {
+          //  std::cout << "answer : " << result.toStdString() << std::endl;
+            for (int i = 0; i < _requests.size(); i++)
+            {
+                this->_httpDaemon->answerRequest(_requests[0].socket,result);
+                _requests.remove(0);
+            }
+        }
+        else
+        {
+            for (int i = _requests.size() - 1; i >= 0; i--)
+            {
+                _requests[i].nbTries++;
+                if(_requests[i].nbTries > MAXTRYFORDECODING)
+                {
+                    this->_httpDaemon->answerRequest(_requests[i].socket,QString("decoding fail"));
+                    _requests.remove(i);
+                }
+            }
         }
     }
-    QSetIterator<int> i(listOfCallBack);
-    while (i.hasNext())
-        qDebug() << i.next();
+    if(!this->_requests.isEmpty())
+    {
+     //   std::cout << "request not empty recapturing a picture" << std::endl;
+       // this->m_imageCapture->capture();
+    }
+    //std::cout << "leaving process image capture : " << QString::number(nb).toStdString() << std::endl;
+    nb++;
+    //this->processRequests();
+}
+
+
+void MainWindow::addRequest(QTcpSocket* socket)
+{
+    //std::cout << "ADDING REQUEST " << std::endl;
+    request a;
+    a.nbTries = 0;
+    a.socket = socket;
+    this->_requests.push_back(a);
+}
+
+void MainWindow::processRequests()
+{
+    //std::cout << "capturing a picture for requesting" << std::endl;
+   // this->m_imageCapture->capture();
 }
