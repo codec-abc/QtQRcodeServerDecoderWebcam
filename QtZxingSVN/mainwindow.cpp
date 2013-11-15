@@ -47,8 +47,6 @@ void MainWindow::on_pushButton_clicked()
     {
         decodeFile2(image);
     }
-
-
 }
 
 
@@ -227,10 +225,8 @@ void MainWindow::processSavedImage(int a,QString string)
 
 void MainWindow::processCapturedImage(int a, QImage image2)
 {
-    QImage image = image2.scaled(400, 400,Qt::KeepAspectRatio);
+    QImage image = image2.scaled(600, 600,Qt::KeepAspectRatio);
     static int nb = 0;
-   // std::cout << "entering process image capture : " << QString::number(nb).toStdString() << std::endl;
-   // std::cout << "processing captured image" << std::endl;
     if(!(listOfCallBack.contains(a)))
     {
         listOfCallBack.insert(a);
@@ -245,7 +241,6 @@ void MainWindow::processCapturedImage(int a, QImage image2)
         }
         if (!(result.isEmpty()))
         {
-          //  std::cout << "answer : " << result.toStdString() << std::endl;
             for (int i = 0; i < _requests.size(); i++)
             {
                 this->_httpDaemon->answerRequest(_requests[0].socket,result);
@@ -265,20 +260,11 @@ void MainWindow::processCapturedImage(int a, QImage image2)
             }
         }
     }
-    if(!this->_requests.isEmpty())
-    {
-     //   std::cout << "request not empty recapturing a picture" << std::endl;
-       // this->m_imageCapture->capture();
-    }
-    //std::cout << "leaving process image capture : " << QString::number(nb).toStdString() << std::endl;
-    nb++;
-    //this->processRequests();
 }
 
 
 void MainWindow::addRequest(QTcpSocket* socket)
 {
-    //std::cout << "ADDING REQUEST " << std::endl;
     request a;
     a.nbTries = 0;
     a.socket = socket;
@@ -287,6 +273,5 @@ void MainWindow::addRequest(QTcpSocket* socket)
 
 void MainWindow::processRequests()
 {
-    //std::cout << "capturing a picture for requesting" << std::endl;
-   // this->m_imageCapture->capture();
+
 }

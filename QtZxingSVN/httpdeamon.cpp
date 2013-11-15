@@ -1,5 +1,6 @@
 #include "httpdeamon.h"
 #include <iostream>
+#include <QThread>
 
 HttpDaemon::HttpDaemon(quint16 port, QObject* parent)
     : QTcpServer(parent), disabled(false)
@@ -9,13 +10,15 @@ HttpDaemon::HttpDaemon(quint16 port, QObject* parent)
 
 void HttpDaemon::incomingConnection(int socket)
 {
-   // std::cout << "incoming connection" << std::endl;
+    //qDebug() << "incomingConnection thread : " << QThread::currentThreadId();
+    static int nb = 0;
     if (disabled)
         return;
     QTcpSocket* s = new QTcpSocket(this);
     connect(s, SIGNAL(readyRead()), this, SLOT(readClient()));
     connect(s, SIGNAL(disconnected()), this, SLOT(discardClient()));
     s->setSocketDescriptor(socket);
+    nb++;
 }
 
 void HttpDaemon::pause()
@@ -46,8 +49,9 @@ void HttpDaemon::readClient()
 }
 void HttpDaemon::discardClient()
 {
+    std::cout << "discardClient" << std::endl;
     QTcpSocket* socket = (QTcpSocket*)sender();
-    socket->deleteLater();
+    //socket->deleteLater();
 }
 
 void HttpDaemon::setMainWindow(MainWindow* mainWindow)
@@ -57,9 +61,9 @@ void HttpDaemon::setMainWindow(MainWindow* mainWindow)
 
 void HttpDaemon::answerRequest(QTcpSocket* socket, QString result)
 {
+   // qDebug() << "answerRequest thread " << QThread::currentThreadId();
     QTextStream os(socket);
     os.setAutoDetectUnicode(true);
-    std::cout << "result is " << result.toStdString() << std::endl;
     /*
     os << "HTTP/1.0 200 Ok\r\n"
         "Content-Type: text/html; charset=\"utf-8\"\r\n"
